@@ -1,11 +1,11 @@
 import { env } from "$env/dynamic/private";
 import {
-    type AggregateResponseRaw,
-    fromRaw,
     type AggregateResponse,
-    type BucketRaw,
-    toReadable,
+    type AggregateResponseRaw,
     type Bucket,
+    type BucketRaw,
+    fromRaw,
+    toReadable,
 } from "$utils/types";
 import { getJson, type LoadFetch } from "./backend.server";
 
@@ -23,20 +23,20 @@ export async function getDaily(fetch: LoadFetch): Promise<Bucket[]> {
     return await getJson<BucketRaw[]>(
         fetch,
         USHIO,
-        "/api/distribution/daily",
+        "/api/distribution?range=day",
     ).then((b) => b.map(toReadable));
 }
 export async function getWeekly(fetch: LoadFetch): Promise<Bucket[]> {
     return await getJson<BucketRaw[]>(
         fetch,
         USHIO,
-        "/api/distribution/weekly",
+        "/api/distribution?range=week",
     ).then((b) => b.map(toReadable));
 }
 export async function getMonthly(fetch: LoadFetch): Promise<Bucket[]> {
     return await getJson<BucketRaw[]>(
         fetch,
         USHIO,
-        "/api/distribution/monthly",
+        "/api/distribution?range=month",
     ).then((b) => b.map(toReadable));
 }
