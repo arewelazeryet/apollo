@@ -1,7 +1,6 @@
 import { env } from "$env/dynamic/private";
 
-const MAIN_BACKEND = env._URL ?? "http://127.0.0.1:6726";
-const USHIO = env._USHIO ?? "http://127.0.0.1:7727";
+const MAIN_BACKEND = env._ATHENA ?? "http://127.0.0.1:6726";
 
 export const VIEW_DEPENDENCY = "app:home-view";
 export const VIEW_CACHE_CONTROL =
@@ -67,19 +66,19 @@ function normalizePointLine(response: PointLineResponse): PointLineResponse {
 
 export async function getCurrent(fetch: LoadFetch) {
     return normalizeSinglePoint(
-        await getChangelogs<SinglePointResponse>(fetch, "/api/bars/current"),
+        await getChangelogs<SinglePointResponse>(fetch, "/api/changelogs/current"),
     );
 }
 
 export async function getPeakUsers(fetch: LoadFetch) {
     return normalizeSinglePoint(
-        await getChangelogs<SinglePointResponse>(fetch, "/api/bars/peak_users"),
+        await getChangelogs<SinglePointResponse>(fetch, "/api/changelogs/peak_users"),
     );
 }
 
 export async function getPeakRatio(fetch: LoadFetch) {
     return normalizeSinglePoint(
-        await getChangelogs<SinglePointResponse>(fetch, "/api/bars/peak_ratio"),
+        await getChangelogs<SinglePointResponse>(fetch, "/api/changelogs/peak_ratio"),
     );
 }
 
@@ -87,20 +86,20 @@ export async function getPeakPercentile(fetch: LoadFetch) {
     return normalizeSinglePoint(
         await getChangelogs<SinglePointResponse>(
             fetch,
-            "/api/bars/peak_percentile",
+            "/api/changelogs/peak_percentile",
         ),
     );
 }
 
 export async function getDayGraph(fetch: LoadFetch) {
     return normalizePointLine(
-        await getChangelogs<PointLineResponse>(fetch, "/api/graphs/day"),
+        await getChangelogs<PointLineResponse>(fetch, "/api/changelogs/charts/day"),
     );
 }
 
 export async function getHistoryGraph(fetch: LoadFetch) {
     return normalizePointLine(
-        await getChangelogs<PointLineResponse>(fetch, "/api/graphs/history"),
+        await getChangelogs<PointLineResponse>(fetch, "/api/changelogs/charts/history"),
     );
 }
 
@@ -109,14 +108,14 @@ export async function getHistoryGraphWeekly(fetch: LoadFetch) {
     return normalizePointLine(
         await getChangelogs<PointLineResponse>(
             fetch,
-            "/api/graphs/history?bucket_size=Week",
+            "/api/changelogs/charts/history?bucket_size=Week",
         ),
     );
 }
 export async function getRatioEstimate(fetch: LoadFetch, percentage: number) {
     return getChangelogs<RegressionResult>(
         fetch,
-        `/api/graphs/ratio_estimate/${percentage}`,
+        `/api/changelogs/charts/ratio_estimate/${percentage}`,
     );
 }
 

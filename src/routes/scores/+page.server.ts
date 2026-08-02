@@ -3,7 +3,7 @@ import {
     getDaily,
     getMonthly,
     getWeekly,
-} from "$lib/server/ushio.server";
+} from "$lib/server/athena.server";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ depends, fetch, setHeaders }) => {
