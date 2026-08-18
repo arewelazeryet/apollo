@@ -92,9 +92,9 @@
                     lazer={changelogs.lazer}
                     wrapped
                 >
-                    <h3 style="margin: 0;">
+                    <span style="margin: 0;">
                         current user counts (as of {date(changelogs.timestamp)})
-                    </h3>
+                    </span>
                 </BarBlock>
             {/if}
             <h2>Historic values</h2>
