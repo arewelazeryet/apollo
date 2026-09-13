@@ -25,6 +25,10 @@
         ruleset === "all" ? aggregateByClientType(values) : values.filter((v) => v.ruleset_id === ruleset),
     );
 
+    // Rendering thousands of daily bars is slow to mount and unreadable at full
+    // range, so keep at most ~150 evenly-spaced buckets.
+    const MAX_BARS = 150;
+
     const rows = $derived.by(() => {
         const timestamps = getTimestamps(filteredData);
         const lazerData = filteredData
@@ -33,11 +37,17 @@
         const stableData = filteredData
             .filter((v) => v.client_type === "stable")
             .map((v) => v[field_name]);
-        return timestamps.map((ts, i) => ({
+        const full = timestamps.map((ts, i) => ({
             timestamp: ts,
             lazer: lazerData[i],
             stable: stableData[i],
         }));
+        const n = full.length;
+        if (n <= MAX_BARS) return full;
+        const step = Math.max(1, Math.ceil(n / MAX_BARS));
+        const sampled = full.filter((_, i) => i % step === 0);
+        if (sampled[sampled.length - 1] !== full[n - 1]) sampled.push(full[n - 1]);
+        return sampled;
     });
 
     const spec: BarChartSpec = $derived.by(() => ({

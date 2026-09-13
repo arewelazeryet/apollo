@@ -222,10 +222,6 @@
         }
     }
 
-    input {
-        appearance: none;
-    }
-
     @media (prefers-color-scheme: light) {
         :root {
             background-color: #f6f6f6;

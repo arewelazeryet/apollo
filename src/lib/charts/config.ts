@@ -25,6 +25,7 @@ export function formatInteger(value: number): string {
 export function formatPercent(value: number): string {
     return (Number(value) / 100).toLocaleString("en-US", {
         style: "percent",
-        maximumFractionDigits: 1,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     });
 }

@@ -1,42 +1,43 @@
-import type { ChartState } from "layerchart";
+import type { BrushState } from "layerchart";
 
 /**
- * Correct drag-box zoom for LayerChart charts that also use `transform`
- * (wheel/pinch).
+ * Correct drag-box zoom for LayerChart charts.
  *
- * LayerChart's integrated brush→zoom (`transform.mode === 'domain'`) derives one
- * uniform scale from the brushed x range and applies it to both axes, so the
- * resulting view is stretched/shifted on the y axis unless selection happens to
- * be proportional. It also interprets a selection made while already zoomed
- * against the *base* domain, compounding the offset. We still rely on the
- * internal handler to wire the gesture up, but we take over on `onBrushEnd`
- * and resolve an exact, per-axis domain directly.
+ * LayerChart's integrated brush→zoom when `transform.mode === 'domain'`
+ * (`zoomToBrush`, Chart.base:452) builds one uniform scale from the brushed x
+ * range and applies it to both axes, so the resulting view is stretched on the
+ * y axis unless the selection box is proportional, and it interprets the
+ * selection (made in current/zoomed domain coordinates) against the base
+ * domain — pushing the view lower than selected, or even flipping the y domain
+ * (negative bar heights). The `zoomOnBrush` path is exact but never clamps
+ * below 0, and for band/x scales it zooms to just the two edge categories.
+ *
+ * We keep the gesture plumbing but take over in `onBrushEnd` (which runs after
+ * layerchart's built-in handler) and write exact, per-axis domains:
+ *  - x: for a time scale, the brushed range; for a band scale, every category
+ *    between the brushed edges (mirroring `expandBandBrushDomain`).
+ *  - y: the brushed range clamped so it never dips below `base.y[0]` (0).
+ *
+ * `base` is the full untransformed domain (computed from the chart's spec), so
+ * it does not react to previously-applied zoom.
  */
-export function useBoxZoom(opts: { yMin?: number; yMax?: number } = {}) {
-    let chart = $state<ChartState | null>(null);
-    let base = $state<{ x: any[]; y: any[] } | null>(null);
+export function useBoxZoom() {
+    // Full untransformed domains, refreshed reactively from the chart's spec by
+    // the calling component (`setBase` is called inside an `$effect`), so the
+    // base never reacts to previously-applied zoom. `clamp` carries the
+    // spec-provided axis ceilings, read in the same reactive context.
+    let base = $state<{ x: any[]; y: [number, number]; clampYMax?: number } | null>(null);
 
-    $effect(() => {
-        if (chart && !base && chart._baseXDomain && chart._baseYDomain) {
-            base = {
-                x: [...chart._baseXDomain],
-                y: [...chart._baseYDomain],
-            };
-        }
-    });
+    function setBase(next: { x: any[]; y: [number, number]; clampYMax?: number }) {
+        base = next;
+    }
 
-    function onBrushEnd(e: {
-        brush: {
-            x: [any, any];
-            y: [any, any];
-            active: boolean;
-        };
-    }) {
-        const ctx = chart;
+    function onBrushEnd(e: { brush: BrushState }) {
+        // Every BrushState holds its owning chart context (see brush.svelte.js).
+        const ctx = (e.brush as any).ctx as any;
         if (!ctx) return;
 
-        const b = e.brush;
-        if (!b.active) {
+        if (!e.brush.active) {
             ctx.brushXDomain = undefined;
             ctx.brushYDomain = undefined;
             ctx.transformState?.reset();
@@ -45,77 +46,61 @@ export function useBoxZoom(opts: { yMin?: number; yMax?: number } = {}) {
 
         const baseX = base?.x;
         const baseY = base?.y;
+        const clampYMax = base?.clampYMax;
 
-        const bx = orderedPair(b.x, baseX);
-        ctx.brushXDomain = bx
-            ? [
-                  clampDomain(bx[0], baseX),
-                  clampDomain(bx[1], baseX),
-              ]
-            : undefined;
+        const bx = e.brush.x;
+        const by = e.brush.y;
 
-        const by = orderedPair(b.y, baseY);
-        if (by && baseY) {
-            const yMin = Math.max(0, opts.yMin ?? Number(baseY[0]));
-            const yMax = opts.yMax ?? Number(baseY[baseY.length - 1]);
-            let [low, high] = by.map((v) => Number(v));
-            low = clampNum(low, yMin, yMax);
-            high = clampNum(high, yMin, yMax);
-            if (!isFinite(low) || !isFinite(high)) {
+        if (bx[0] != null && bx[1] != null) {
+            if (baseX && baseX.length > 2) {
+                // Band scale: keep the category band between the brush edges so
+                // bars stay at full bandwidth instead of two squished bars.
+                const i0 = baseX.indexOf(bx[0]);
+                const i1 = baseX.indexOf(bx[1]);
+                ctx.brushXDomain =
+                    i0 >= 0 && i1 >= 0
+                        ? baseX.slice(Math.min(i0, i1), Math.max(i0, i1) + 1)
+                        : orderedPair(bx, baseX);
+            } else {
+                ctx.brushXDomain = orderedPair(bx, baseX ?? []);
+            }
+        } else {
+            ctx.brushXDomain = undefined;
+        }
+
+        if (by[0] != null && by[1] != null && baseY) {
+            const yMax = clampYMax ?? baseY[1];
+            const p = orderedPair(by, baseY);
+            let lo = Number(p[0]);
+            let hi = Number(p[1]);
+            if (!isFinite(lo) || !isFinite(hi)) {
                 ctx.brushYDomain = undefined;
             } else {
-                ctx.brushYDomain = [Math.min(low, high), Math.max(low, high)];
+                ctx.brushYDomain = [Math.max(0, Math.min(lo, hi)), Math.max(0, Math.min(Math.max(lo, hi), yMax))];
             }
         } else {
             ctx.brushYDomain = undefined;
         }
 
-        // The internal branch already ran `zoomToBrush`; snap the transform back to
-        // an identity so the brush domains above are rendered exactly (same tick,
-        // so there is no flash of the misaligned intermediate state).
+        // The built-in handler (when a transform is in domain mode) already ran
+        // `zoomToBrush`; snap the transform back to an identity so the per-axis
+        // domains above render exactly. Same tick, so there is no intermediate
+        // frame.
         ctx.transformState?.reset();
     }
 
-    return { chart, onBrushEnd };
+    return { setBase, onBrushEnd };
 }
 
-function orderedPair([a, b]: [any, any], domain?: any[]): any[] | null {
-    if (a == null || b == null) return null;
+function orderedPair(pair: (number | Date | string | null)[], _domain?: any[]): [any, any] {
+    const a = pair[0];
+    const b = pair[1];
+    if (a == null || b == null) return [a as any, b as any];
     if (typeof a === "number" && typeof b === "number") {
-        return [Math.min(a, b), Math.max(a, b)];
+        return a <= b ? [a, b] : [b, a];
     }
-    if (a instanceof Date && b instanceof Date) {
-        const [lo, hi] = a < b ? [a, b] : [b, a];
-        return [lo, hi];
-    }
-    if (Array.isArray(domain) && domain.length > 0) {
-        const i0 = domain.indexOf(a);
-        const i1 = domain.indexOf(b);
-        if (i0 >= 0 && i1 >= 0) {
-            return [domain[Math.min(i0, i1)], domain[Math.max(i0, i1)]];
-        }
+    if (a instanceof Date || b instanceof Date) {
+        return new Date(a).getTime() <= new Date(b).getTime() ? [a, b] : [b, a];
     }
     return [a, b];
-}
-
-function clampDomain(value: any, domain?: any[]): any {
-    if (!domain || domain.length === 0) return value;
-    if (typeof value === "number") {
-        return clampNum(value, Number(domain[0]), Number(domain[domain.length - 1]));
-    }
-    if (value instanceof Date) {
-        const lo = new Date(domain[0]).getTime();
-        const hi = new Date(domain[domain.length - 1]).getTime();
-        return new Date(clampNum(value.getTime(), lo, hi));
-    }
-    const idx = domain.indexOf(value);
-    if (idx < 0) return value;
-    return domain[idx];
-}
-
-function clampNum(value: number, min: number, max: number): number {
-    if (!isFinite(min) && isFinite(max)) return Math.min(value, max);
-    if (isFinite(min) && !isFinite(max)) return Math.max(value, min);
-    if (!isFinite(min) && !isFinite(max)) return value;
-    return Math.max(min, Math.min(max, value));
 }

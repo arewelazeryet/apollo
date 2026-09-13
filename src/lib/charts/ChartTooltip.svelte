@@ -7,19 +7,19 @@
         header,
         formatValue,
         label,
+        series = [],
     }: {
         context: any;
         mode?: "series" | "data";
         header?: (d: any) => string;
         formatValue?: (v: number) => string;
         label?: (d: any) => string;
+        series?: { key: string; label: string; color: string; value?: (d: any) => number }[];
     } = $props();
 </script>
 
 <Tooltip.Root {context} variant="none">
-    {#snippet children(state: any)}
-        {@const data = state.data}
-        {@const series = state.series ?? []}
+    {#snippet children({ data })}
         <div class="lc-tt">
             {#if header}
                 <div class="lc-tt-header">{header(data)}</div>
@@ -28,15 +28,18 @@
                 <div class="lc-tt-row">
                     <span class="lc-tt-dot" style:background-color={data.color}></span>
                     <span class="lc-tt-label">{label ? label(data) : data.label}</span>
-                    <span class="lc-tt-value">{formatValue ? formatValue(data.value) : data.value}</span>
+                    <span class="lc-tt-value">{formatValue ? formatValue(Number(data.value)) : data.value}</span>
                 </div>
             {:else}
                 {#each series as s}
-                    <div class="lc-tt-row">
-                        <span class="lc-tt-dot" style:background-color={s.color}></span>
-                        <span class="lc-tt-label">{label ? label(s) : s.label}</span>
-                        <span class="lc-tt-value">{formatValue ? formatValue(s.value) : s.value}</span>
-                    </div>
+                    {@const raw = typeof s.value === "function" ? s.value(data) : data?.[s.key]}
+                    {#if raw != null}
+                        <div class="lc-tt-row">
+                            <span class="lc-tt-dot" style:background-color={s.color}></span>
+                            <span class="lc-tt-label">{label ? label(s) : s.label}</span>
+                            <span class="lc-tt-value">{formatValue ? formatValue(Number(raw)) : raw}</span>
+                        </div>
+                    {/if}
                 {/each}
             {/if}
         </div>

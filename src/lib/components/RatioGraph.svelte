@@ -38,6 +38,7 @@
         yDomain: [0, 100],
         yTicks: 5,
         yTickFormat: formatPercent,
+        itemFormat: formatPercent,
         annotations: is24h ? [] : milestones,
     }));
 </script>
