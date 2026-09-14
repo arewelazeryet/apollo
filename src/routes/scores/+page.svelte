@@ -62,11 +62,6 @@
         overflow-y: scroll;
     }
 
-    .contents {
-        width: 100vw;
-        padding: 10px;
-    }
-
     .box {
         display: flex;
         align-items: center;
@@ -74,13 +69,13 @@
         width: 100%;
     }
     @media (max-width: 1599px) {
-        .contents {
+        .box {
             max-width: 700px;
         }
     }
 
     @media (min-width: 1600px) {
-        .contents {
+        .box {
             max-width: 1400px;
         }
     }

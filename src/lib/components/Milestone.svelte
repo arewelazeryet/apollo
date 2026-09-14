@@ -1,9 +1,7 @@
 <script lang="ts">
     let { row, date, column, children } = $props();
-    // svelte-ignore state_referenced_locally
-    let displayDate = date ? new Date(date).toLocaleDateString("en-GB") : "TBD";
-    // svelte-ignore state_referenced_locally
-    let succeeded = date ? true : false;
+    const displayDate = $derived(date ? new Date(date).toLocaleDateString("en-GB") : "TBD");
+    const succeeded = $derived(Boolean(date));
 </script>
 
 <div

@@ -1,11 +1,9 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
-    import { makeUserCountConfiguration } from "$lib/utils/graph.ts";
-
-    import type { Chart as ChartType } from "chart.js";
-    import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm";
-
-    let Chart: typeof ChartType;
+    import TimelineChart from "$lib/components/charts/TimelineChart.svelte";
+    import { milestones } from "$lib/utils/graph.ts";
+    import { makeSeries, seriesColors, formatInteger } from "$lib/components/charts";
+    import type { TimelineChartSpec } from "$lib/components/charts/types";
+    import ChartCard from "$lib/components/ChartCard.svelte";
 
     let {
         timestamps,
@@ -23,155 +21,32 @@
         is24h?: boolean;
     } = $props();
 
-    let chartCanvas: HTMLCanvasElement = $state();
-    let graphChart: ChartType | undefined = $state();
-    let resizeFrame: number | undefined;
-    let lastWidth = 0;
-    let mounted = $state(false);
+    const rows = $derived(
+        timestamps.map((ts, i) => ({
+            timestamp: ts,
+            stable: stable[i],
+            lazer: lazer[i],
+            sum: sum[i],
+        })),
+    );
 
-    function createPlot() {
-        if (!mounted || graphChart || !chartCanvas?.isConnected) {
-            return;
-        }
-
-        lastWidth = chartCanvas.clientWidth;
-
-        graphChart = new Chart(
-            chartCanvas,
-            makeUserCountConfiguration(
-                timestamps,
-                stable,
-                lazer,
-                sum,
-                name,
-                is24h,
-            ),
-        );
-    }
-
-    function handleDoubleclick() {
-        graphChart?.resetZoom();
-    }
-
-    function recreatePlot() {
-        if (!mounted) {
-            return;
-        }
-
-        graphChart?.destroy();
-        graphChart = undefined;
-        createPlot();
-    }
-
-    function queueResize() {
-        if (resizeFrame != null) {
-            return;
-        }
-
-        resizeFrame = requestAnimationFrame(() => {
-            resizeFrame = undefined;
-
-            if (!graphChart) {
-                return;
-            }
-
-            const width = chartCanvas.clientWidth;
-            if (width === 0 || width === lastWidth) {
-                return;
-            }
-
-            lastWidth = width;
-            graphChart.resize(width, 450);
-        });
-    }
-
-    $effect(() => {
-        if (graphChart) {
-            graphChart.data.labels = timestamps.map((ts) =>
-                Math.floor(ts * 1000),
-            );
-            graphChart.data.datasets[0].data = stable;
-            graphChart.data.datasets[1].data = lazer;
-            graphChart.data.datasets[2].data = sum;
-            graphChart.update();
-        }
-    });
-
-    onMount(() => {
-        let isCancelled = false;
-
-        let mediaQuery: MediaQueryList | undefined;
-        let onSchemeChange: (() => void) | undefined;
-        let ro: ResizeObserver | undefined;
-        let io: IntersectionObserver | undefined;
-
-        // dynamically import the modules on the client. zoom plugin will not work with ssr for example
-        const initChart = async () => {
-            const { Chart: ChartModule, registerables } =
-                await import("chart.js");
-            const annotationPlugin = (await import("chartjs-plugin-annotation"))
-                .default;
-            const zoomPlugin = (await import("chartjs-plugin-zoom")).default;
-
-            if (isCancelled) return;
-
-            Chart = ChartModule;
-            Chart.register(...registerables, annotationPlugin, zoomPlugin);
-
-            mounted = true;
-
-            mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-            onSchemeChange = recreatePlot;
-
-            mediaQuery.addEventListener("change", onSchemeChange);
-
-            ro = new ResizeObserver(queueResize);
-
-            ro.observe(chartCanvas);
-
-            io = new IntersectionObserver(
-                ([entry]) => {
-                    if (!entry?.isIntersecting) {
-                        return;
-                    }
-
-                    createPlot();
-                    io?.disconnect();
-                },
-                { rootMargin: "300px" },
-            );
-
-            io.observe(chartCanvas);
-        };
-
-        initChart();
-
-        return () => {
-            isCancelled = true;
-            mounted = false;
-
-            if (mediaQuery && onSchemeChange) {
-                mediaQuery.removeEventListener("change", onSchemeChange);
-            }
-
-            io?.disconnect();
-            ro?.disconnect();
-
-            if (resizeFrame != null) {
-                cancelAnimationFrame(resizeFrame);
-            }
-        };
-    });
-
-    onDestroy(() => {
-        graphChart?.destroy();
-        graphChart = undefined;
-    });
+    const spec: TimelineChartSpec = $derived.by(() => ({
+        rows,
+        x: (d: any) => new Date(d.timestamp * 1000),
+        series: makeSeries([
+            { key: "stable", color: seriesColors.stable },
+            { key: "lazer", color: seriesColors.lazer },
+            { key: "total", color: seriesColors.total, field: "sum" },
+        ]),
+        title: name,
+        xFormat: is24h ? "hour" : "month",
+        yDomain: [0, 25000],
+        yTickFormat: formatInteger,
+        itemFormat: formatInteger,
+        annotations: is24h ? [] : milestones,
+    }));
 </script>
 
-<div style="height: 480px; max-width: 700px; padding: 15px 10px; width: 100%">
-    {#if !mounted}
-        <span>Waiting for the chart to load...</span>
-    {/if}
-    <canvas bind:this={chartCanvas} ondblclick={handleDoubleclick}></canvas>
-</div>
+<ChartCard centered>
+    <TimelineChart {spec} />
+</ChartCard>

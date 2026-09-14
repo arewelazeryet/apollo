@@ -12,7 +12,7 @@
 
 <div class="outer-box">
     <SegmentedControl value={type} onChange={(v) => (type = v)}>
-        {#each ["scores", "users"] as option}
+        {#each ["users"] as option}
             <Segment value={option}>{option}</Segment>
         {/each}
     </SegmentedControl>

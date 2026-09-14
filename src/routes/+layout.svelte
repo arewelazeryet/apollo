@@ -1,4 +1,5 @@
 <script lang="ts">
+    import "../app.css";
     import Footer from '$components/Navs/Footer/Footer.svelte';
     import Header from '$components/Navs/Header/Header.svelte';
     import { page } from '$app/state';

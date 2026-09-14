@@ -1,4 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Inconsolata&display=swap");
+@import "layerchart/core.css";
+
 :root {
     font-family: "Inconsolata", monospace;
     font-optical-sizing: auto;
@@ -6,69 +8,62 @@
     line-height: 1.5;
     font-weight: 400;
 
-    color-scheme: light dark;
-
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
+
+    /* Rosé Pine */
+    --rp-base: #191724;
+    --rp-surface: #1f1d2e;
+    --rp-overlay: #26233a;
+    --rp-muted: #6e6a86;
+    --rp-subtle: #908caa;
+    --rp-text: #e0def4;
+    --rp-love: #eb6f92;
+    --rp-gold: #f6c177;
+    --rp-rose: #ebbcba;
+    --rp-pine: #31748f;
+    --rp-foam: #9ccfd8;
+    --rp-iris: #c4a7e7;
+    --rp-highlight-low: #21202e;
+    --rp-highlight-med: #403d52;
+    --rp-highlight-high: #524f67;
+
+    /* Chart palette */
+    --chart-text: var(--rp-text);
+    --chart-grid: var(--rp-overlay);
+    --chart-border: var(--rp-highlight-med);
+
+    --chart-lazer: #ff66aa;
+    --chart-stable: #66ccff;
+    --chart-total: var(--rp-muted);
+    --chart-both: var(--rp-gold);
+    --chart-milestone: var(--rp-iris);
+    --chart-halo: var(--rp-overlay);
+
+    --chart-tooltip-bg: var(--rp-surface);
+    --chart-tooltip-text: var(--rp-text);
+
+    /* LayerChart theme */
+    --color-primary: var(--chart-lazer);
+    --color-surface-100: var(--rp-base);
+    --color-surface-200: var(--rp-surface);
+    --color-surface-300: var(--rp-overlay);
+    --color-surface-content: var(--chart-text);
 }
 
-a {
-    font-weight: 500;
-    color: #646cff;
-    text-decoration: inherit;
-}
-a:hover {
-    color: #535bf2;
-}
-
-@media (prefers-color-scheme: dark) {
-    body,
-    html,
+@media (prefers-color-scheme: light) {
     :root {
-        background-color: black;
+        --chart-text: var(--rp-muted);
+        --chart-grid: #dfdad9;
+        --chart-border: #c9c4c0;
+        --chart-halo: #f6f6f6;
+
+        --color-surface-100: #f6f6f6;
+        --color-surface-200: #ece7e3;
+        --color-surface-300: #e0dad6;
+        --color-surface-content: var(--chart-text);
     }
-}
-body {
-    margin: 0;
-    display: flex;
-    place-items: center;
-    min-width: 320px;
-}
-
-h1 {
-    font-size: 3.2em;
-    line-height: 1.1;
-}
-
-.card {
-    padding: 2em;
-}
-
-#app {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 2rem;
-    text-align: center;
-}
-
-button {
-    border-radius: 8px;
-    border: 1px solid transparent;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    background-color: #1a1a1a;
-    cursor: pointer;
-    transition: border-color 0.25s;
-}
-button:hover {
-    border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-    outline: 4px auto -webkit-focus-ring-color;
 }
