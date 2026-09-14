@@ -22,12 +22,7 @@
         cRange={spec.items.map((i) => i.color)}
     >
         {#snippet tooltip({ context })}
-            <ChartTooltip
-                {context}
-                mode="data"
-                header={() => "User totals"}
-                formatValue={formatInteger}
-            />
+            <ChartTooltip {context} mode="data" header={() => "User totals"} formatValue={formatInteger} />
         {/snippet}
     </PieChart>
 </ChartFrame>

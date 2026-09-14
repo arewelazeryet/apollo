@@ -41,6 +41,7 @@
     --chart-total: var(--rp-muted);
     --chart-both: var(--rp-gold);
     --chart-milestone: var(--rp-iris);
+    --chart-halo: var(--rp-overlay);
 
     --chart-tooltip-bg: var(--rp-surface);
     --chart-tooltip-text: var(--rp-text);
@@ -58,6 +59,7 @@
         --chart-text: var(--rp-muted);
         --chart-grid: #dfdad9;
         --chart-border: #c9c4c0;
+        --chart-halo: #f6f6f6;
 
         --color-surface-100: #f6f6f6;
         --color-surface-200: #ece7e3;

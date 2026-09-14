@@ -1,8 +1,9 @@
 <script lang="ts">
     import TimelineChart from "$lib/charts/TimelineChart.svelte";
     import { milestones } from "$lib/utils/graph.ts";
-    import { seriesColors, formatInteger } from "$lib/charts";
+    import { makeSeries, seriesColors, formatInteger } from "$lib/charts";
     import type { TimelineChartSpec } from "$lib/charts/types";
+    import ChartCard from "$lib/components/ChartCard.svelte";
 
     let {
         timestamps,
@@ -32,26 +33,11 @@
     const spec: TimelineChartSpec = $derived.by(() => ({
         rows,
         x: (d: any) => new Date(d.timestamp * 1000),
-        series: [
-            {
-                key: "stable",
-                label: "stable",
-                color: seriesColors.stable,
-                value: (d: any) => d.stable,
-            },
-            {
-                key: "lazer",
-                label: "lazer",
-                color: seriesColors.lazer,
-                value: (d: any) => d.lazer,
-            },
-            {
-                key: "total",
-                label: "total",
-                color: seriesColors.total,
-                value: (d: any) => d.sum,
-            },
-        ],
+        series: makeSeries([
+            { key: "stable", color: seriesColors.stable },
+            { key: "lazer", color: seriesColors.lazer },
+            { key: "total", color: seriesColors.total, field: "sum" },
+        ]),
         title: name,
         xFormat: is24h ? "hour" : "month",
         yDomain: [0, 25000],
@@ -61,6 +47,6 @@
     }));
 </script>
 
-<div style="height: 480px; max-width: 700px; padding: 15px 10px; width: 100%">
+<ChartCard centered>
     <TimelineChart {spec} />
-</div>
+</ChartCard>

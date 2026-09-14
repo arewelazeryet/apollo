@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { GroupedBarChart, seriesColors, formatInteger } from "$lib/charts";
+    import { GroupedBarChart, makeSeries, seriesColors, formatInteger } from "$lib/charts";
     import type { BarChartSpec } from "$lib/charts/types";
     import { maxLabelSize } from "$lib/utils/graph.ts";
     import {
@@ -8,6 +8,7 @@
         type AggregateFieldUnion,
         type AggregateResponse,
     } from "$lib/utils/types";
+    import ChartCard from "$lib/components/ChartCard.svelte";
 
     let {
         values,
@@ -53,27 +54,16 @@
     const spec: BarChartSpec = $derived.by(() => ({
         rows,
         x: (d: any) => new Date(d.timestamp * 1000),
-        series: [
-            {
-                key: "lazer",
-                label: "lazer",
-                color: seriesColors.lazer,
-                value: (d: any) => d.lazer,
-            },
-            {
-                key: "stable",
-                label: "stable",
-                color: seriesColors.stable,
-                value: (d: any) => d.stable,
-            },
-        ],
+        series: makeSeries([
+            { key: "lazer", color: seriesColors.lazer },
+            { key: "stable", color: seriesColors.stable },
+        ]),
         title: humanized_field_name,
-        xMode: "time",
         yMax: maxLabelSize(field_name),
         yTickFormat: formatInteger,
     }));
 </script>
 
-<div style="height: 480px; padding: 15px 10px; width: 80%;">
+<ChartCard>
     <GroupedBarChart {spec} />
-</div>
+</ChartCard>

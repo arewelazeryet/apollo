@@ -48,6 +48,8 @@
     // bucket with a per-series field each) and series carry NO value accessor —
     // a value accessor makes `value ?? key` return the accessor function and
     // collapses every series onto the same sub-band.
+    // LayerChart's highlight points all sit at band center (they have no x1
+    // sub-band), so the marks snippet renders its own per-bar highlight circles.
     const layerSeries = $derived(
         spec.series.map((s) => ({
             key: s.key,
@@ -56,6 +58,19 @@
         })),
     );
 
+    // The tooltip wants the value accessors back, and ChartFrame wants the
+    // legend swatches — derive both once so the template doesn't re-map.
+    const tooltipSeries = $derived(
+        spec.series.map((s) => ({
+            key: s.key,
+            label: s.label,
+            color: s.color,
+            value: s.value,
+        })),
+    );
+
+    const seriesMeta = $derived(tooltipSeries.map((s) => ({ label: s.label, color: s.color })));
+
     const header = $derived((d: any) => {
         const x = spec.x(d);
         return x instanceof Date
@@ -63,15 +78,16 @@
             : String(x);
     });
 
-    function highlightGeom(context: any, key: string, value: number) {
-        const bandValue = context.x(context.tooltip.data);
+    /// The top of the bar for `key` at the hovered row: sub-band x-position
+    /// (`x1Scale`) plus half its width for the group layout, at y = value
+    /// (the y scale is reversed, so that's the bar top).
+    function barCenter(context: any, key: string, value: number) {
         const x1 = context.x1Scale;
-        const bw = x1 ? x1.bandwidth() : ((context.xScale as any).bandwidth?.() ?? 0);
+        const bandX = context.xScale(context.x(context.tooltip.data));
+        const subW = x1 ? x1.bandwidth() : ((context.xScale as any).bandwidth?.() ?? 0);
         return {
-            x: context.xScale(bandValue) + (x1 ? x1(key) : 0),
+            x: bandX + (x1 ? x1(key) : 0) + subW / 2,
             y: context.yScale(value),
-            w: bw,
-            h: context.yScale(0) - context.yScale(value),
         };
     }
 </script>
@@ -79,7 +95,7 @@
 <ChartFrame
     title={spec.title}
     height={spec.height ?? 480}
-    legend={spec.series.map((s) => ({ label: s.label, color: s.color }))}
+    legend={seriesMeta}
 >
     <BarChart
         data={spec.rows}
@@ -96,7 +112,6 @@
         legend={false}
         yDomain={spec.yMax != null ? [0, spec.yMax] : undefined}
         props={{
-            bars: { radius: 0 },
             xAxis: {
                 placement: "bottom",
                 fill: palette.text,
@@ -116,23 +131,13 @@
         brush={{ axis: "both", zoomOnBrush: true, onBrushEnd: zoom.onBrushEnd }}
     >
         {#snippet tooltip({ context })}
-            <ChartTooltip
-                {context}
-                {header}
-                series={spec.series.map((s) => ({
-                    key: s.key,
-                    label: s.label,
-                    color: s.color,
-                    value: s.value,
-                }))}
-                formatValue={spec.itemFormat ?? formatInteger}
-            />
+            <ChartTooltip {context} {header} series={tooltipSeries} formatValue={spec.itemFormat ?? formatInteger} />
         {/snippet}
         {#snippet marks({ context })}
             {#each context.series.visibleSeries as s (s.key)}
                 <Bars
                     seriesKey={s.key}
-                    x1={(d: any) => s.value ?? s.key}
+                    x1={() => s.key}
                     radius={0}
                     strokeWidth={1}
                 />
@@ -140,9 +145,9 @@
             {#if context.tooltip.data}
                 {#each context.tooltip.series as s}
                     {#if s.visible !== false && s.value != null}
-                        {@const g = highlightGeom(context, s.key, s.value)}
+                        {@const g = barCenter(context, s.key, s.value)}
                         <circle
-                            cx={g.x + g.w / 2}
+                            cx={g.x}
                             cy={g.y}
                             r={4}
                             fill={s.color}

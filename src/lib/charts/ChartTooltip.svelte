@@ -6,14 +6,12 @@
         mode = "series",
         header,
         formatValue,
-        label,
         series = [],
     }: {
         context: any;
         mode?: "series" | "data";
         header?: (d: any) => string;
         formatValue?: (v: number) => string;
-        label?: (d: any) => string;
         series?: { key: string; label: string; color: string; value?: (d: any) => number }[];
     } = $props();
 </script>
@@ -27,7 +25,7 @@
             {#if mode === "data"}
                 <div class="lc-tt-row">
                     <span class="lc-tt-dot" style:background-color={data.color}></span>
-                    <span class="lc-tt-label">{label ? label(data) : data.label}</span>
+                    <span class="lc-tt-label">{data.label}</span>
                     <span class="lc-tt-value">{formatValue ? formatValue(Number(data.value)) : data.value}</span>
                 </div>
             {:else}
@@ -36,7 +34,7 @@
                     {#if raw != null}
                         <div class="lc-tt-row">
                             <span class="lc-tt-dot" style:background-color={s.color}></span>
-                            <span class="lc-tt-label">{label ? label(s) : s.label}</span>
+                            <span class="lc-tt-label">{s.label}</span>
                             <span class="lc-tt-value">{formatValue ? formatValue(Number(raw)) : raw}</span>
                         </div>
                     {/if}

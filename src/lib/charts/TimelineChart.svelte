@@ -8,6 +8,12 @@
     import { useBoxZoom } from "./zoom.svelte.js";
     import type { TimelineChartSpec } from "./types.js";
 
+    // Annotation label layout: ~6px of text per character at the 10px font
+    // below, so colliding labels drop to the next 14px-high row.
+    const ANN_FONT_SIZE = 10;
+    const ANN_CHAR_PX = 5.6;
+    const ANN_ROW_H = 14;
+
     let { spec }: { spec: TimelineChartSpec } = $props();
 
     const yMax = $derived.by(() => {
@@ -73,7 +79,7 @@
         const [t0, t1] = xExtent;
         const span = Math.max(1, t1.getTime() - t0.getTime());
         const W = plotW || 1100;
-        const textW = (label: string) => Math.min(320, Math.max(28, label.length * 5.6 + 12));
+        const textW = (label: string) => Math.min(320, Math.max(28, label.length * ANN_CHAR_PX + 12));
         const rows: { a: number; b: number }[][] = [];
         const placed: { date: Date; label: string; offset: number }[] = [];
         for (const a of anns) {
@@ -84,7 +90,7 @@
             while (row < rows.length && rows[row].some((iv) => x0 < iv.b && x1 > iv.a)) row++;
             if (row === rows.length) rows.push([]);
             rows[row].push({ a: x0, b: x1 });
-            placed.push({ date, label: a.label, offset: row * 14 });
+            placed.push({ date, label: a.label, offset: row * ANN_ROW_H });
         }
         return placed.map((p) => ({
             type: "line" as const,
@@ -95,9 +101,9 @@
             props: {
                 line: { stroke: palette.milestone, strokeOpacity: 0.5, strokeWidth: 1 },
                 label: {
-                    font: { size: 10 },
+                    font: { size: ANN_FONT_SIZE },
                     fill: palette.text,
-                    stroke: "#26233a",
+                    stroke: palette.halo,
                     strokeWidth: 4,
                 },
             },

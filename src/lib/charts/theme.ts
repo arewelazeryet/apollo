@@ -9,6 +9,7 @@ export const palette = {
     total: "var(--chart-total)",
     both: "var(--chart-both)",
     milestone: "var(--chart-milestone)",
+    halo: "var(--chart-halo)",
     tooltipBg: "var(--chart-tooltip-bg)",
     tooltipText: "var(--chart-tooltip-text)",
 } as const;

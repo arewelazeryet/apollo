@@ -15,3 +15,4 @@ export { default as ScorePieChart } from "./ScorePieChart.svelte";
 
 export { palette, seriesColors, readCssVar } from "./theme.js";
 export { zoomConfig, formatInteger, formatPercent } from "./config.js";
+export { makeSeries } from "./series.js";

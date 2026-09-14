@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { GroupedBarChart, seriesColors, formatInteger } from "$lib/charts";
+    import { GroupedBarChart, makeSeries, seriesColors, formatInteger } from "$lib/charts";
     import type { BarChartSpec } from "$lib/charts/types";
     import type { Bucket } from "$lib/utils/types";
+    import ChartCard from "$lib/components/ChartCard.svelte";
 
     let {
         values,
@@ -21,32 +22,16 @@
     const spec: BarChartSpec = $derived.by(() => ({
         rows,
         x: (d: any) => d.bucket,
-        series: [
-            {
-                key: "lazer",
-                label: "lazer",
-                color: seriesColors.lazer,
-                value: (d: any) => d.lazer,
-            },
-            {
-                key: "stable",
-                label: "stable",
-                color: seriesColors.stable,
-                value: (d: any) => d.stable,
-            },
-            {
-                key: "both",
-                label: "both",
-                color: seriesColors.both,
-                value: (d: any) => d.both,
-            },
-        ],
+        series: makeSeries([
+            { key: "lazer", color: seriesColors.lazer },
+            { key: "stable", color: seriesColors.stable },
+            { key: "both", color: seriesColors.both },
+        ]),
         title: "User distribution per user ID bucket",
-        xMode: "category",
         yTickFormat: formatInteger,
     }));
 </script>
 
-<div style="height: 500px; width: 80%; padding: 15px;">
+<ChartCard height={500}>
     <GroupedBarChart {spec} />
-</div>
+</ChartCard>
