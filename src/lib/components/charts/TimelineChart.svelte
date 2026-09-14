@@ -8,11 +8,7 @@
     import { palette } from "./theme.ts";
     import type { TimelineChartSpec } from "./types.ts";
 
-    // Annotation label layout: ~5.6px of text per character at the 10px font
-    // below, so colliding labels drop to the next 24px-high row.
-    const ANN_FONT_SIZE = 10;
-    const ANN_CHAR_PX = 5.6;
-    const ANN_ROW_H = 24;
+    const ANN_FONT_SIZE = 16;
 
     let { spec }: { spec: TimelineChartSpec } = $props();
 
@@ -56,18 +52,6 @@
         return +a <= +b ? [a, b] : [b, a];
     }
 
-    // Date range for X
-    const xExtent = $derived.by(() => {
-        let lo = Infinity;
-        let hi = -Infinity;
-        for (const r of spec.rows) {
-            const t = spec.x(r).getTime();
-            if (t < lo) lo = t;
-            if (t > hi) hi = t;
-        }
-        return [new Date(lo), new Date(hi)];
-    }) as [Date, Date];
-
     const layerSeries = $derived(
         spec.series.map((s) => ({
             key: s.key,
@@ -77,53 +61,28 @@
         })),
     );
 
-    // The element is actually used, TS lang server doesn't see the Svelte reference
-    let plotElement = $state<HTMLElement>();
-    let plotWidth = $state(0);
-
-    const annotations = $derived.by(() => {
-        const list = spec.annotations ?? [];
-        if (!list.length) return [];
-
-        // Estimate positions in plot pixels: time mapped across the width, and each label measured at
-        // ANN_CHAR_PX per char on the ANN_FONT_SIZE font (clamped to 28-320px).
-        const [xStart, xEnd] = xExtent;
-        const width = plotWidth || 1100; // fallback until the plot is measured
-        const toPx = (date: Date) =>
-            ((date.getTime() - xStart.getTime()) / Math.max(1, xEnd.getTime() - xStart.getTime())) * width;
-        const labelSpan = (label: string) =>
-            Math.min(320, Math.max(28, label.length * ANN_CHAR_PX + 120));
-
-        // Pack colliding spans: each [x, xEnd) goes into the first row that spans fit in,
-        // otherwise a new row starts ANN_ROW_H lower.
-        const rows: { date: Date; label: string; x: number; xEnd: number }[][] = [];
-        for (const annotation of list) {
-            const date = new Date(annotation.date);
-            const x = toPx(date);
-            const xEnd = x + labelSpan(annotation.label);
-            let row = rows.findIndex((labels) => labels.every((l) => xEnd <= l.x || x >= l.xEnd));
-            if (row === -1) {
-                row = rows.length;
-                rows.push([]);
-            }
-            rows[row].push({ date, label: annotation.label, x, xEnd });
-        }
-
-        // Flatten the rows into AnnotationLine items, use index as height
-        return rows.flatMap((row, rowIndex) =>
-            row.map(({ date, label }) => ({
-                type: "line" as const,
-                x: date,
-                label,
-                labelPlacement: "top-center" as const,
-                labelYOffset: rowIndex * ANN_ROW_H,
-                props: {
-                    line: { stroke: palette.milestone, strokeOpacity: 0.5, strokeWidth: 1 },
-                    label: { font: { size: ANN_FONT_SIZE }, fill: palette.text, stroke: palette.halo, strokeWidth: 4 },
+    const annotations = $derived(
+        (spec.annotations ?? []).map((annotation) => ({
+            type: "line" as const,
+            x: new Date(annotation.date),
+            label: annotation.label,
+            labelPlacement: "top" as const,
+            props: {
+                line: { stroke: palette.milestone, strokeOpacity: 0.5, strokeWidth: 1 },
+                label: {
+                    font: { size: ANN_FONT_SIZE },
+                    fill: palette.text,
+                    stroke: palette.halo,
+                    strokeWidth: 3,
+                    rotate: -90,
+                    dy: 5,
+                    dx: -3,
+                    textAnchor: 'end',
+                    verticalAnchor: 'end'
                 },
-            })),
-        );
-    });
+            },
+        })),
+    );
 
     const header = $derived((d: any) => {
         const ts = spec.x(d);
@@ -151,7 +110,7 @@
     height={spec.height ?? 480}
     legend={spec.series.map((s) => ({ label: s.label, color: s.color }))}
 >
-    <div bind:this={plotElement} class="lc-measure">
+    <div class="lc-measure">
         <LineChart
             data={spec.rows}
             x={spec.x}
