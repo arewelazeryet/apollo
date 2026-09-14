@@ -13,8 +13,8 @@
 
     const distinctX = $derived.by(() => {
         const set = new Set<any>();
-        for (const r of spec.rows) {
-            const x = spec.x(r);
+        for (const row of spec.rows) {
+            const x = spec.x(row);
             if (x instanceof Date) {
                 set.add(x);
             } else {
@@ -42,14 +42,6 @@
         zoom.setBase({ x: distinctX, y: [0, yMax] });
     });
 
-    // LayerChart's grouped-bar layout derives the sub-band ("x1") from the
-    // series key itself (`value ?? key`), and reads a bar's height / tooltip
-    // value from the same key as a data field. So rows stay wide (one row per
-    // bucket with a per-series field each) and series carry NO value accessor —
-    // a value accessor makes `value ?? key` return the accessor function and
-    // collapses every series onto the same sub-band.
-    // LayerChart's highlight points all sit at band center (they have no x1
-    // sub-band), so the marks snippet renders its own per-bar highlight circles.
     const layerSeries = $derived(
         spec.series.map((s) => ({
             key: s.key,
@@ -58,8 +50,6 @@
         })),
     );
 
-    // The tooltip wants the value accessors back, and ChartFrame wants the
-    // legend swatches — derive both once so the template doesn't re-map.
     const tooltipSeries = $derived(
         spec.series.map((s) => ({
             key: s.key,
@@ -69,8 +59,6 @@
         })),
     );
 
-    const seriesMeta = $derived(tooltipSeries.map((s) => ({ label: s.label, color: s.color })));
-
     const header = $derived((d: any) => {
         const x = spec.x(d);
         return x instanceof Date
@@ -78,9 +66,6 @@
             : String(x);
     });
 
-    /// The top of the bar for `key` at the hovered row: sub-band x-position
-    /// (`x1Scale`) plus half its width for the group layout, at y = value
-    /// (the y scale is reversed, so that's the bar top).
     function barCenter(context: any, key: string, value: number) {
         const x1 = context.x1Scale;
         const bandX = context.xScale(context.x(context.tooltip.data));
@@ -95,7 +80,7 @@
 <ChartFrame
     title={spec.title}
     height={spec.height ?? 480}
-    legend={seriesMeta}
+    legend={layerSeries}
 >
     <BarChart
         data={spec.rows}
@@ -143,6 +128,9 @@
                 />
             {/each}
             {#if context.tooltip.data}
+                <!-- layerchart's highlight circles sit at the band center (no
+                     x1 sub-band, hence `highlight={{ points: false }}`), so the
+                     tooltip marker is drawn per sub-bar below. -->
                 {#each context.tooltip.series as s}
                     {#if s.visible !== false && s.value != null}
                         {@const g = barCenter(context, s.key, s.value)}

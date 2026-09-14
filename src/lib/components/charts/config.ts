@@ -1,11 +1,9 @@
-/// Wheel/pinch zoom/pan for the time-series charts.
-/// Drag-to-zoom is handled separately by `useBoxZoom` (uniform-scale transform
-/// transforms can't represent an arbitrary two-axis box selection).
+import type { TransformContext, TransformState, TransformStateOptions } from "layerchart";
 export const zoomConfig = {
     transform: {
         mode: "domain" as const,
         axis: "both" as const,
-        scrollMode: "scale" as const,
+        scrollMode: "none" as const,
         pinch: true,
         scaleExtent: [1, 40] as [number, number],
         domainExtent: {
@@ -13,7 +11,7 @@ export const zoomConfig = {
             // Never let a zoom/pan reveal negative values (percentages or counts)
             y: { min: 0 as const, max: "data" as const },
         },
-    },
+    }  as TransformStateOptions,
 };
 
 /// Numeric formatting shared by the tooltips of the count/score charts.

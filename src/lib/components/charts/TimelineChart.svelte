@@ -7,16 +7,16 @@
     import { palette } from "./theme.ts";
     import { useBoxZoom } from "./zoom.svelte.ts";
     import type { TimelineChartSpec } from "./types.ts";
-    import { AnnotationLine } from "layerchart";
 
-    // Annotation label layout: ~6px of text per character at the 10px font
-    // below, so colliding labels drop to the next 14px-high row.
+    // Annotation label layout: ~5.6px of text per character at the 10px font
+    // below, so colliding labels drop to the next 24px-high row.
     const ANN_FONT_SIZE = 10;
     const ANN_CHAR_PX = 5.6;
-    const ANN_ROW_H = 14;
+    const ANN_ROW_H = 24;
 
     let { spec }: { spec: TimelineChartSpec } = $props();
 
+    // Highest element by Y
     const yMax = $derived.by(() => {
         if (spec.yDomain) return spec.yDomain[1];
         let hi = 0;
@@ -26,6 +26,7 @@
         return hi;
     });
 
+    // Date range for X
     const xExtent = $derived.by(() => {
         let lo = Infinity;
         let hi = -Infinity;
@@ -35,7 +36,7 @@
             if (t > hi) hi = t;
         }
         return [new Date(lo), new Date(hi)];
-    });
+    }) as [Date, Date];
 
     const zoom = useBoxZoom();
 
@@ -56,59 +57,52 @@
         })),
     );
 
-    let plotEl = $state<HTMLElement>();
-    let plotW = $state(0);
-
-    $effect(() => {
-        const el = plotEl;
-        if (!el) return;
-        const ro = new ResizeObserver(() => {
-            plotW = el.clientWidth;
-        });
-        ro.observe(el);
-        plotW = el.clientWidth;
-        return () => {
-            ro.disconnect();
-        };
-    });
+    // The element is actually used, TS lang server doesn't see the Svelte reference
+    let plotElement = $state<HTMLElement>();
+    let plotWidth = $state(0);
 
     const annotations = $derived.by(() => {
-        const anns = spec.annotations ?? [];
-        if (!anns.length) return [];
-        // Estimate pixel positions across the plot; top-right labels hang down
-        // from the top edge, so a per-annotation labelYOffset stacks the rows.
-        const [t0, t1] = xExtent;
-        const span = Math.max(1, t1.getTime() - t0.getTime());
-        const W = plotW || 1100;
-        const textW = (label: string) => Math.min(320, Math.max(28, label.length * ANN_CHAR_PX + 12));
-        const rows: { a: number; b: number }[][] = [];
-        const placed: { date: Date; label: string; offset: number }[] = [];
-        for (const a of anns) {
-            const date = new Date(a.date);
-            const x0 = ((date.getTime() - t0.getTime()) / span) * W;
-            const x1 = x0 + textW(a.label);
-            let row = 0;
-            while (row < rows.length && rows[row].some((iv) => x0 < iv.b && x1 > iv.a)) row++;
-            if (row === rows.length) rows.push([]);
-            rows[row].push({ a: x0, b: x1 });
-            placed.push({ date, label: a.label, offset: row * ANN_ROW_H });
+        const list = spec.annotations ?? [];
+        if (!list.length) return [];
+
+        // Estimate positions in plot pixels: time mapped across the width, and each label measured at
+        // ANN_CHAR_PX per char on the ANN_FONT_SIZE font (clamped to 28-320px).
+        const [xStart, xEnd] = xExtent;
+        const width = plotWidth || 1100; // fallback until the plot is measured
+        const toPx = (date: Date) =>
+            ((date.getTime() - xStart.getTime()) / Math.max(1, xEnd.getTime() - xStart.getTime())) * width;
+        const labelSpan = (label: string) =>
+            Math.min(320, Math.max(28, label.length * ANN_CHAR_PX + 120));
+
+        // Pack colliding spans: each [x, xEnd) goes into the first row that spans fit in,
+        // otherwise a new row starts ANN_ROW_H lower.
+        const rows: { date: Date; label: string; x: number; xEnd: number }[][] = [];
+        for (const annotation of list) {
+            const date = new Date(annotation.date);
+            const x = toPx(date);
+            const xEnd = x + labelSpan(annotation.label);
+            let row = rows.findIndex((labels) => labels.every((l) => xEnd <= l.x || x >= l.xEnd));
+            if (row === -1) {
+                row = rows.length;
+                rows.push([]);
+            }
+            rows[row].push({ date, label: annotation.label, x, xEnd });
         }
-        return placed.map((p) => ({
-            type: "line" as const,
-            x: p.date,
-            label: p.label,
-            labelPlacement: "top-right" as const,
-            labelYOffset: p.offset,
-            props: {
-                line: { stroke: palette.milestone, strokeOpacity: 0.5, strokeWidth: 1 },
-                label: {
-                    font: { size: ANN_FONT_SIZE },
-                    fill: palette.text,
-                    stroke: palette.halo,
-                    strokeWidth: 4,
+
+        // Flatten the rows into AnnotationLine items, use index as height
+        return rows.flatMap((row, rowIndex) =>
+            row.map(({ date, label }) => ({
+                type: "line" as const,
+                x: date,
+                label,
+                labelPlacement: "top-right" as const,
+                labelYOffset: rowIndex * ANN_ROW_H,
+                props: {
+                    line: { stroke: palette.milestone, strokeOpacity: 0.5, strokeWidth: 1 },
+                    label: { font: { size: ANN_FONT_SIZE }, fill: palette.text, stroke: palette.halo, strokeWidth: 4 },
                 },
-            },
-        }) as AnnotationLine);
+            })),
+        );
     });
 
     const header = $derived((d: any) => {
@@ -137,7 +131,7 @@
     height={spec.height ?? 480}
     legend={spec.series.map((s) => ({ label: s.label, color: s.color }))}
 >
-    <div bind:this={plotEl} class="lc-measure">
+    <div bind:this={plotElement} class="lc-measure">
         <LineChart
             data={spec.rows}
             x={spec.x}

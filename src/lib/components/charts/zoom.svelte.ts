@@ -1,43 +1,24 @@
-import type { BrushState } from "layerchart";
+import type { BrushState, ChartState, BrushDomainType } from "layerchart";
 
-/**
- * Correct drag-box zoom for LayerChart charts.
- *
- * LayerChart's integrated brush→zoom when `transform.mode === 'domain'`
- * (`zoomToBrush`, Chart.base:452) builds one uniform scale from the brushed x
- * range and applies it to both axes, so the resulting view is stretched on the
- * y axis unless the selection box is proportional, and it interprets the
- * selection (made in current/zoomed domain coordinates) against the base
- * domain — pushing the view lower than selected, or even flipping the y domain
- * (negative bar heights). The `zoomOnBrush` path is exact but never clamps
- * below 0, and for band/x scales it zooms to just the two edge categories.
- *
- * We keep the gesture plumbing but take over in `onBrushEnd` (which runs after
- * layerchart's built-in handler) and write exact, per-axis domains:
- *  - x: for a time scale, the brushed range; for a band scale, every category
- *    between the brushed edges (mirroring `expandBandBrushDomain`).
- *  - y: the brushed range clamped so it never dips below `base.y[0]` (0).
- *
- * `base` is the full untransformed domain (computed from the chart's spec), so
- * it does not react to previously-applied zoom.
- */
+type ZoomBase = {
+    x: BrushDomainType;
+    y: BrushDomainType,
+    clampYMax?: number
+}
+
 export function useBoxZoom() {
-    // Full untransformed domains, refreshed reactively from the chart's spec by
-    // the calling component (`setBase` is called inside an `$effect`), so the
-    // base never reacts to previously-applied zoom. `clamp` carries the
-    // spec-provided axis ceilings, read in the same reactive context.
-    let base = $state<{ x: any[]; y: [number, number]; clampYMax?: number } | null>(null);
+    let base = $state<ZoomBase | null>(null);
 
-    function setBase(next: { x: any[]; y: [number, number]; clampYMax?: number }) {
+    function setBase(next: ZoomBase) {
         base = next;
     }
 
-    function onBrushEnd(e: { brush: BrushState }) {
-        // Every BrushState holds its owning chart context (see brush.svelte.js).
-        const ctx = (e.brush as any).ctx as any;
+    function onBrushEnd(event: { brush: BrushState }) {
+        // Value is narrowed at runtime, it's full in reality
+        const ctx = event.brush.ctx as ChartState | null;
         if (!ctx) return;
 
-        if (!e.brush.active) {
+        if (!event.brush.active) {
             ctx.brushXDomain = undefined;
             ctx.brushYDomain = undefined;
             ctx.transformState?.reset();
@@ -48,13 +29,11 @@ export function useBoxZoom() {
         const baseY = base?.y;
         const clampYMax = base?.clampYMax;
 
-        const bx = e.brush.x;
-        const by = e.brush.y;
+        const bx = event.brush.x;
+        const by = event.brush.y;
 
         if (bx[0] != null && bx[1] != null) {
             if (baseX && baseX.length > 2) {
-                // Band scale: keep the category band between the brush edges so
-                // bars stay at full bandwidth instead of two squished bars.
                 const i0 = baseX.indexOf(bx[0]);
                 const i1 = baseX.indexOf(bx[1]);
                 ctx.brushXDomain =
@@ -76,23 +55,19 @@ export function useBoxZoom() {
             if (!isFinite(lo) || !isFinite(hi)) {
                 ctx.brushYDomain = undefined;
             } else {
-                ctx.brushYDomain = [Math.max(0, Math.min(lo, hi)), Math.max(0, Math.min(Math.max(lo, hi), yMax))];
+                ctx.brushYDomain = [Math.max(0, Math.min(lo, hi)), Math.max(0, Math.min(Math.max(lo, hi), yMax as number))];
             }
         } else {
             ctx.brushYDomain = undefined;
         }
 
-        // The built-in handler (when a transform is in domain mode) already ran
-        // `zoomToBrush`; snap the transform back to an identity so the per-axis
-        // domains above render exactly. Same tick, so there is no intermediate
-        // frame.
         ctx.transformState?.reset();
     }
 
     return { setBase, onBrushEnd };
 }
 
-function orderedPair(pair: (number | Date | string | null)[], _domain?: any[]): [any, any] {
+function orderedPair(pair: (number | Date | string | null)[], _domain?: any[]): [BrushDomainType[number], BrushDomainType[number]] {
     const a = pair[0];
     const b = pair[1];
     if (a == null || b == null) return [a as any, b as any];
