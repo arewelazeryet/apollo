@@ -115,7 +115,7 @@
                 type: "line" as const,
                 x: date,
                 label,
-                labelPlacement: "top-right" as const,
+                labelPlacement: "top-center" as const,
                 labelYOffset: rowIndex * ANN_ROW_H,
                 props: {
                     line: { stroke: palette.milestone, strokeOpacity: 0.5, strokeWidth: 1 },

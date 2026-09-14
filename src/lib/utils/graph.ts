@@ -8,6 +8,7 @@ export const milestones = [
     { date: "2025-11-20", label: "updated download page" },
     { date: "2026-04-17", label: "ranked play" },
     { date: "2026-06-20", label: "mod multiplier changes" },
+    { date: "2026-08-18", label: "ohnePixel" }
 ];
 
 export function maxLabelSize(field: AggregateFieldUnion) {

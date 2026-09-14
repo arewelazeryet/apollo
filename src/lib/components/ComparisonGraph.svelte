@@ -39,7 +39,7 @@
             { key: "total", color: seriesColors.total, field: "sum" },
         ]),
         title: name,
-        xFormat: is24h ? "hour" : "month",
+        xFormat: is24h ? "hour" : "day",
         yDomain: [0, 25000],
         yTickFormat: formatInteger,
         itemFormat: formatInteger,

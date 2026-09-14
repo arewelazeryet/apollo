@@ -30,7 +30,7 @@
             { key: "lazer", label: "lazer%", color: seriesColors.lazer, field: "value" },
         ]),
         title: name,
-        xFormat: is24h ? "hour" : "month",
+        xFormat: is24h ? "hour" : "day",
         yDomain: [0, 100],
         yTicks: 5,
         yTickFormat: formatPercent,
