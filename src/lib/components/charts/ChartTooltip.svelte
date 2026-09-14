@@ -18,29 +18,31 @@
 
 <Tooltip.Root {context} variant="none">
     {#snippet children({ data })}
-        <div class="lc-tt">
+        <table class="lc-tt">
             {#if header}
-                <div class="lc-tt-header">{header(data)}</div>
+                <thead><tr><td colspan="3" class="lc-tt-header">{header(data)}</td></tr></thead>
             {/if}
-            {#if mode === "data"}
-                <div class="lc-tt-row">
-                    <span class="lc-tt-dot" style:background-color={data.color}></span>
-                    <span class="lc-tt-label">{data.label}</span>
-                    <span class="lc-tt-value">{formatValue ? formatValue(Number(data.value)) : data.value}</span>
-                </div>
-            {:else}
-                {#each series as s}
-                    {@const raw = typeof s.value === "function" ? s.value(data) : data?.[s.key]}
-                    {#if raw != null}
-                        <div class="lc-tt-row">
-                            <span class="lc-tt-dot" style:background-color={s.color}></span>
-                            <span class="lc-tt-label">{s.label}</span>
-                            <span class="lc-tt-value">{formatValue ? formatValue(Number(raw)) : raw}</span>
-                        </div>
-                    {/if}
-                {/each}
-            {/if}
-        </div>
+            <tbody>
+                {#if mode === "data"}
+                    <tr>
+                        <td><span class="lc-tt-dot" style:background-color={data.color}></span></td>
+                        <td class="lc-tt-label">{data.label}</td>
+                        <td class="lc-tt-value">{formatValue ? formatValue(Number(data.value)) : data.value}</td>
+                    </tr>
+                {:else}
+                    {#each series as s}
+                        {@const raw = typeof s.value === "function" ? s.value(data) : data?.[s.key]}
+                        {#if raw != null}
+                            <tr>
+                                <td><span class="lc-tt-dot" style:background-color={s.color}></span></td>
+                                <td class="lc-tt-label">{s.label}</td>
+                                <td class="lc-tt-value">{formatValue ? formatValue(Number(raw)) : raw}</td>
+                            </tr>
+                        {/if}
+                    {/each}
+                {/if}
+            </tbody>
+        </table>
     {/snippet}
 </Tooltip.Root>
 
@@ -55,26 +57,28 @@
             min-width: 90px;
             pointer-events: none;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        .lc-tt td {
+            border: none;
+            padding: 1px 4px;
+            vertical-align: middle;
         }
         .lc-tt-header {
             font-weight: 600;
-            margin-bottom: 4px;
-        }
-        .lc-tt-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin: 2px 0;
+            padding-bottom: 4px;
         }
         .lc-tt-label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            text-align: left;
             text-transform: capitalize;
+            white-space: nowrap;
+            padding-right: 12px;
         }
         .lc-tt-value {
+            text-align: left;
             font-weight: 600;
+            white-space: nowrap;
         }
         .lc-tt-dot {
             width: 10px;
