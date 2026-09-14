@@ -1,11 +1,11 @@
 <script lang="ts">
     import { LineChart } from "layerchart/svg";
+    import type { BrushState, ChartState, BrushDomainType } from "layerchart";
 
     import ChartFrame from "./ChartFrame.svelte";
     import ChartTooltip from "./ChartTooltip.svelte";
-    import { zoomConfig, formatInteger } from "./config.ts";
+    import { formatInteger } from "./config.ts";
     import { palette } from "./theme.ts";
-    import { useBoxZoom } from "./zoom.svelte.ts";
     import type { TimelineChartSpec } from "./types.ts";
 
     // Annotation label layout: ~5.6px of text per character at the 10px font
@@ -26,6 +26,36 @@
         return hi;
     });
 
+    // Box zoom: the brushed box becomes the visible domain via layerchart's chart-state brush
+    // domains, which take precedence over the `yDomain` prop in `resolveDomain`. Axis-agnostic —
+    // continuous time X needs no band slicing, and Y is clamped to [0, yMax].
+    function onBrushEnd(event: { brush: BrushState }) {
+        const ctx = event.brush.ctx as ChartState | null;
+        if (!ctx) return;
+
+        if (!event.brush.active) {
+            ctx.brushXDomain = undefined;
+            ctx.brushYDomain = undefined;
+            return;
+        }
+
+        const bx = event.brush.x;
+        const by = event.brush.y;
+        ctx.brushXDomain = bx[0] != null && bx[1] != null ? orderedPair(bx) : undefined;
+        if (by[0] != null && by[1] != null) {
+            const [lo, hi] = orderedPair(by);
+            ctx.brushYDomain = [Math.max(0, Number(lo)), Math.max(0, Math.min(Number(hi), yMax))];
+        } else {
+            ctx.brushYDomain = undefined;
+        }
+    }
+
+    function orderedPair(pair: BrushDomainType): [BrushDomainType[number], BrushDomainType[number]] {
+        const [a, b] = pair;
+        if (a == null || b == null) return [a, b];
+        return +a <= +b ? [a, b] : [b, a];
+    }
+
     // Date range for X
     const xExtent = $derived.by(() => {
         let lo = Infinity;
@@ -37,16 +67,6 @@
         }
         return [new Date(lo), new Date(hi)];
     }) as [Date, Date];
-
-    const zoom = useBoxZoom();
-
-    $effect(() => {
-        zoom.setBase({
-            x: xExtent,
-            y: [0, yMax],
-            clampYMax: spec.yDomain?.[1] ?? yMax,
-        });
-    });
 
     const layerSeries = $derived(
         spec.series.map((s) => ({
@@ -162,8 +182,7 @@
                 },
                 tooltip: { hideTotal: true },
             }}
-            transform={zoomConfig.transform}
-            brush={{ axis: "both", zoomOnBrush: true, onBrushEnd: zoom.onBrushEnd }}
+            brush={{ axis: "both", zoomOnBrush: true, onBrushEnd }}
         >
             {#snippet tooltip({ context })}
                 <ChartTooltip

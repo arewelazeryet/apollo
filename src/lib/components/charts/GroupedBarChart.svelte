@@ -4,28 +4,11 @@
 
     import ChartFrame from "./ChartFrame.svelte";
     import ChartTooltip from "./ChartTooltip.svelte";
-    import { formatInteger } from "./config.js";
+    import { zoomConfig, formatInteger } from "./config.js";
     import { palette } from "./theme.js";
-    import { useBoxZoom } from "./zoom.svelte.js";
     import type { BarChartSpec } from "./types.js";
 
     let { spec }: { spec: BarChartSpec } = $props();
-
-    const distinctX = $derived.by(() => {
-        const set = new Set<any>();
-        for (const row of spec.rows) {
-            const x = spec.x(row);
-            if (x instanceof Date) {
-                set.add(x);
-            } else {
-                set.add(String(x));
-            }
-        }
-        const sorted = [...set].sort((a, b) =>
-            a instanceof Date && b instanceof Date ? a.getTime() - b.getTime() : String(a) < String(b) ? -1 : 1,
-        );
-        return sorted;
-    });
 
     const yMax = $derived.by(() => {
         if (spec.yMax != null) return spec.yMax;
@@ -34,12 +17,6 @@
             for (const s of spec.series) hi = Math.max(hi, s.value(r));
         }
         return hi;
-    });
-
-    const zoom = useBoxZoom();
-
-    $effect(() => {
-        zoom.setBase({ x: distinctX, y: [0, yMax] });
     });
 
     const layerSeries = $derived(
@@ -113,7 +90,8 @@
             },
             tooltip: { hideTotal: true },
         }}
-        brush={{ axis: "both", zoomOnBrush: true, onBrushEnd: zoom.onBrushEnd }}
+        transform={zoomConfig.transform}
+        brush={{ axis: "x" }}
     >
         {#snippet tooltip({ context })}
             <ChartTooltip {context} {header} series={tooltipSeries} formatValue={spec.itemFormat ?? formatInteger} />

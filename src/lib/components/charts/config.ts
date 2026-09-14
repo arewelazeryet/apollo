@@ -2,7 +2,7 @@ import type { TransformContext, TransformState, TransformStateOptions } from "la
 export const zoomConfig = {
     transform: {
         mode: "domain" as const,
-        axis: "both" as const,
+        axis: "x" as const,
         scrollMode: "none" as const,
         pinch: true,
         scaleExtent: [1, 40] as [number, number],

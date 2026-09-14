@@ -53,7 +53,7 @@
 
     const spec: BarChartSpec = $derived.by(() => ({
         rows,
-        x: (d: any) => new Date(d.timestamp * 1000),
+        x: (d: any) => new Date(d.timestamp * 1000).toISOString().slice(0, 10),
         series: makeSeries([
             { key: "lazer", color: seriesColors.lazer },
             { key: "stable", color: seriesColors.stable },
