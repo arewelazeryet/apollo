@@ -1,4 +1,4 @@
-/// Wheel/pinch zoom/pan, mirroring the previous chartjs wheel+pinch setup.
+/// Wheel/pinch zoom/pan for the time-series charts.
 /// Drag-to-zoom is handled separately by `useBoxZoom` (uniform-scale transform
 /// transforms can't represent an arbitrary two-axis box selection).
 export const zoomConfig = {

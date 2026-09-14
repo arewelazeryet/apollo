@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { GroupedBarChart, makeSeries, seriesColors, formatInteger } from "$lib/charts";
-    import type { BarChartSpec } from "$lib/charts/types";
+    import { GroupedBarChart, makeSeries, seriesColors, formatInteger } from "$lib/components/charts";
+    import type { BarChartSpec } from "$lib/components/charts/types";
     import { maxLabelSize } from "$lib/utils/graph.ts";
     import {
         aggregateByClientType,

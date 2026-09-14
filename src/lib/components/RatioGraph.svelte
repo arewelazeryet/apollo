@@ -1,7 +1,7 @@
 <script lang="ts">
     import { milestones } from "$lib/utils/graph.ts";
-    import { TimelineChart, makeSeries, seriesColors, formatPercent } from "$lib/charts";
-    import type { TimelineChartSpec } from "$lib/charts/types";
+    import { TimelineChart, makeSeries, seriesColors, formatPercent } from "$lib/components/charts";
+    import type { TimelineChartSpec } from "$lib/components/charts/types";
     import ChartCard from "$lib/components/ChartCard.svelte";
 
     let {

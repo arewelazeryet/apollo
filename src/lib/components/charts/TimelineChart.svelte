@@ -3,10 +3,11 @@
 
     import ChartFrame from "./ChartFrame.svelte";
     import ChartTooltip from "./ChartTooltip.svelte";
-    import { zoomConfig, formatInteger } from "./config.js";
-    import { palette } from "./theme.js";
-    import { useBoxZoom } from "./zoom.svelte.js";
-    import type { TimelineChartSpec } from "./types.js";
+    import { zoomConfig, formatInteger } from "./config.ts";
+    import { palette } from "./theme.ts";
+    import { useBoxZoom } from "./zoom.svelte.ts";
+    import type { TimelineChartSpec } from "./types.ts";
+    import { AnnotationLine } from "layerchart";
 
     // Annotation label layout: ~6px of text per character at the 10px font
     // below, so colliding labels drop to the next 14px-high row.
@@ -107,7 +108,7 @@
                     strokeWidth: 4,
                 },
             },
-        }));
+        }) as AnnotationLine);
     });
 
     const header = $derived((d: any) => {

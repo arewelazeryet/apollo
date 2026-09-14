@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { ScorePieChart, seriesColors } from "$lib/charts";
-    import type { PieChartSpec } from "$lib/charts/types";
+    import { ScorePieChart, seriesColors } from "$lib/components/charts";
+    import type { PieChartSpec } from "$lib/components/charts/types";
     import type { Bucket } from "$lib/utils/types";
 
     let {
