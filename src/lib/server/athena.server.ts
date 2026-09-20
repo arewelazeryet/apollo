@@ -40,3 +40,25 @@ export async function getMonthly(fetch: LoadFetch): Promise<Bucket[]> {
         "/api/distribution?range=month",
     ).then((b) => b.map(toReadable));
 }
+
+export async function getDailyScores(fetch: LoadFetch): Promise<Bucket[]> {
+    return await getJson<BucketRaw[]>(
+        fetch,
+        ATHENA,
+        "/api/distribution/scores?range=day",
+    ).then((b) => b.map(toReadable));
+}
+export async function getWeeklyScores(fetch: LoadFetch): Promise<Bucket[]> {
+    return await getJson<BucketRaw[]>(
+        fetch,
+        ATHENA,
+        "/api/distribution/scores?range=week",
+    ).then((b) => b.map(toReadable));
+}
+export async function getMonthlyScores(fetch: LoadFetch): Promise<Bucket[]> {
+    return await getJson<BucketRaw[]>(
+        fetch,
+        ATHENA,
+        "/api/distribution/scores?range=month",
+    ).then((b) => b.map(toReadable));
+}

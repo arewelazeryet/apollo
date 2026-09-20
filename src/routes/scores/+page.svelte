@@ -4,12 +4,13 @@
     import BucketChartBase from "$components/ScoreData/BucketChartBase.svelte";
     import PieChart from "$components/ScoreData/PieChart.svelte";
     import type { AggregateResponse, Bucket, BucketRaw } from "$utils/types";
+    import favicon from "../../assets/favicon.ico";
+    import type { LoadProps } from "./+page.server";
 
     let {
         data,
-    }: { data: { aggregate: AggregateResponse[]; daily: Bucket[] } } = $props();
+    }: { data: LoadProps } = $props();
 
-    import favicon from "../../assets/favicon.ico";
 
     let values = $derived(data.aggregate);
     let daily = $derived(data);
