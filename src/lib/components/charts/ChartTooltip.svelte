@@ -7,14 +7,26 @@
         header,
         formatValue,
         series = [],
+        extraValues = [],
     }: {
         context: any;
         mode?: "series" | "data";
         header?: (d: any) => string;
         formatValue?: (v: number) => string;
         series?: { key: string; label: string; color: string; value?: (d: any) => number }[];
+        extraValues?: { label: string; value: (d: any) => number; format?: (v: number) => string }[];
     } = $props();
 </script>
+
+{#snippet extras(row: any)}
+    {#each extraValues as ev}
+        <tr>
+            <td></td>
+            <td class="lc-tt-label lc-tt-sub">{ev.label}</td>
+            <td class="lc-tt-value">{ev.format ? ev.format(ev.value(row)) : ev.value(row)}</td>
+        </tr>
+    {/each}
+{/snippet}
 
 <Tooltip.Root {context} variant="none">
     {#snippet children({ data })}
@@ -29,6 +41,7 @@
                         <td class="lc-tt-label">{data.label}</td>
                         <td class="lc-tt-value">{formatValue ? formatValue(Number(data.value)) : data.value}</td>
                     </tr>
+                    {@render extras(data)}
                 {:else}
                     {#each series as s}
                         {@const raw = typeof s.value === "function" ? s.value(data) : data?.[s.key]}
@@ -38,6 +51,7 @@
                                 <td class="lc-tt-label">{s.label}</td>
                                 <td class="lc-tt-value">{formatValue ? formatValue(Number(raw)) : raw}</td>
                             </tr>
+                            {@render extras(data)}
                         {/if}
                     {/each}
                 {/if}
@@ -74,6 +88,11 @@
             text-transform: capitalize;
             white-space: nowrap;
             padding-right: 12px;
+        }
+        .lc-tt-sub {
+            padding-left: 14px;
+            color: color-mix(in oklab, var(--chart-tooltip-text) 70%, transparent);
+            text-transform: none;
         }
         .lc-tt-value {
             text-align: left;

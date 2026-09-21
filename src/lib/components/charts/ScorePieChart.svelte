@@ -7,6 +7,8 @@
     import type { PieChartSpec } from "./types.js";
 
     let { spec }: { spec: PieChartSpec } = $props();
+
+    const total = $derived(spec.items.reduce((acc, i) => acc + i.value, 0));
 </script>
 
 <ChartFrame
@@ -22,7 +24,19 @@
         cRange={spec.items.map((i) => i.color)}
     >
         {#snippet tooltip({ context })}
-            <ChartTooltip {context} mode="data" header={() => "User totals"} formatValue={formatInteger} />
+            <ChartTooltip
+                {context}
+                mode="data"
+                header={() => "User totals"}
+                formatValue={formatInteger}
+                extraValues={[
+                    {
+                        label: "share",
+                        value: (item) => (total ? (item.value / total) * 100 : 0),
+                        format: (v) => `${v.toFixed(1)}%`,
+                    },
+                ]}
+            />
         {/snippet}
     </PieChart>
 </ChartFrame>
