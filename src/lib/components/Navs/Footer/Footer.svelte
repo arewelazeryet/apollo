@@ -8,8 +8,6 @@
     ></FooterLink>
     <FooterLink url="https://osu.ppy.sh/users/11482346" title="osu"
     ></FooterLink>
-    <FooterLink url="https://www.donationalerts.com/r/ch1ffaa" title="donations"
-    ></FooterLink>
     <span>version: {env.PUBLIC_VERSION}</span>
 </footer>
 

@@ -8,6 +8,8 @@
     ></FooterLink>
     <FooterLink url="/scores" title="scores"
     ></FooterLink>
+    <FooterLink url="https://www.donationalerts.com/r/ch1ffaa" title="support me!"
+    ></FooterLink>
 </nav>
 
 <style>
