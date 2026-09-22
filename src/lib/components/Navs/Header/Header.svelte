@@ -4,12 +4,13 @@
 </script>
 
 <nav class="header">
-    <FooterLink url="/" title="users"
-    ></FooterLink>
-    <FooterLink url="/scores" title="scores"
-    ></FooterLink>
-    <FooterLink url="https://www.donationalerts.com/r/ch1ffaa" title="support me!"
-    ></FooterLink>
+    <FooterLink url="/history" title="history" />
+    <FooterLink url="/" title="users" />
+    <FooterLink url="/scores" title="scores" />
+    <FooterLink
+        url="https://www.donationalerts.com/r/ch1ffaa"
+        title="support me!"
+    />
 </nav>
 
 <style>

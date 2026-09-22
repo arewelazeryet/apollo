@@ -8,6 +8,7 @@
         formatValue,
         series = [],
         extraValues = [],
+        hideZeros = false,
     }: {
         context: any;
         mode?: "series" | "data";
@@ -15,6 +16,7 @@
         formatValue?: (v: number) => string;
         series?: { key: string; label: string; color: string; value?: (d: any) => number }[];
         extraValues?: { label: string; value: (d: any) => number; format?: (v: number) => string }[];
+        hideZeros?: boolean;
     } = $props();
 </script>
 
@@ -45,7 +47,7 @@
                 {:else}
                     {#each series as s}
                         {@const raw = typeof s.value === "function" ? s.value(data) : data?.[s.key]}
-                        {#if raw != null}
+                        {#if raw != null && (!hideZeros || Number(raw) !== 0)}
                             <tr>
                                 <td><span class="lc-tt-dot" style:background-color={s.color}></span></td>
                                 <td class="lc-tt-label">{s.label}</td>

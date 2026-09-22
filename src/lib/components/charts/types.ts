@@ -29,6 +29,8 @@ export type TimelineChartSpec = {
     yTickFormat?: (value: number) => string;
     itemFormat?: (value: number) => string;
     annotations?: MilestoneAnnotation[];
+    /** Omit tooltip rows (and only tooltip rows) whose value is zero. */
+    hideZeros?: boolean;
     height?: number;
 };
 

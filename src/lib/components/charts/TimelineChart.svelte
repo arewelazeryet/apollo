@@ -149,6 +149,7 @@
                     {header}
                     series={layerSeries}
                     formatValue={spec.itemFormat ?? formatInteger}
+                    hideZeros={spec.hideZeros}
                 />
             {/snippet}
         </LineChart>

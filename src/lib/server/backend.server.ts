@@ -113,6 +113,20 @@ export async function getHistoryGraphWeekly(fetch: LoadFetch) {
         ),
     );
 }
+
+
+export async function getCompleteHistory(fetch: LoadFetch) {
+    return normalizePointLine(
+        await getChangelogs<PointLineResponse>(fetch, "/api/changelogs/charts/complete"),
+    );
+}
+
+export async function getCompleteHistoryWeekly(fetch: LoadFetch) {
+    return normalizePointLine(
+        await getChangelogs<PointLineResponse>(fetch, "/api/changelogs/charts/complete?bucket_size=Week"),
+    );
+}
+
 export async function getRatioEstimate(fetch: LoadFetch, percentage: number) {
     return getChangelogs<RegressionResult>(
         fetch,
